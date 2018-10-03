@@ -2,64 +2,39 @@ class Tournament
   include Random::Secure
   include YAML::Serializable
 
-  @[YAML::Field]
-  property name : String
-
-  @[YAML::Field]
-  property guild : UInt64
-
-  @[YAML::Field]
-  property game : String
-
-  @[YAML::Field]
-  property creator : UInt64
-
-  @[YAML::Field]
-  property hosts : Array(UInt64)
-
-  @[YAML::Field]
-  property volunteers : Array(UInt64)
-
-  @[YAML::Field]
-  property commentators : Array(UInt64)
-
-  @[YAML::Field]
-  property participants : Array(UInt64)
-
-  @[YAML::Field]
-  property bracket : String
-
-  @[YAML::Field]
-  property started : Bool
-
-  @[YAML::Field]
-  property maps : Array(String)
-
-  @[YAML::Field]
-  property matches : Array(Match)
-
-  @[YAML::Field]
-  property current_match : String
-
-  @[YAML::Field]
-  property next_match : String
+  property name             : String
+  property guild            : UInt64
+  property game             : String
+  property creator          : UInt64
+  property hosts            : Array(UInt64)
+  property volunteers       : Array(UInt64)
+  property commentators     : Array(UInt64)
+  property participants     : Array(UInt64)
+  property bracket          : String
+  property started          : Bool
+  property maps             : Array(String)
+  property matches          : Array(Match)
+  property current_match    : String
+  property next_match       : String
+  property match_id_counter : Int32
 
 
   def initialize(author : UInt64, guild : UInt64, name : String?)
-    @name          = name.empty? ? Random::Secure.hex(3) : name
-    @guild         = guild
-    @game          = "*No game set for this tournament yet.*"
-    @creator       = author
-    @hosts         = [author]
-    @volunteers    = Array(UInt64).new
-    @commentators  = [author]
-    @participants  = Array(UInt64).new
-    @bracket       = "*No bracket set for this tournament yet.*"
-    @started       = false
-    @maps          = Array(String).new
-    @matches       = Array(Match).new
-    @current_match = ""
-    @next_match    = ""
+    @name             = name.empty? ? Random::Secure.hex(3) : name
+    @guild            = guild
+    @game             = "*No game set for this tournament yet.*"
+    @creator          = author
+    @hosts            = [author]
+    @volunteers       = Array(UInt64).new
+    @commentators     = [author]
+    @participants     = Array(UInt64).new
+    @bracket          = "*No bracket set for this tournament yet.*"
+    @started          = false
+    @maps             = Array(String).new
+    @matches          = Array(Match).new
+    @current_match    = ""
+    @next_match       = ""
+    @match_id_counter = 0
   end
 
   def to_embed(cache : Discord::Cache?)
@@ -105,6 +80,10 @@ class Tournament
     @current_match = @next_match
     @next_match = @matches[0]?.to_s
     @matches.delete(@matches[0]?)
+  end
+
+  def add_match(participants : Array(UInt64), time : Time)
+    @matches << Match.new(participants, time, @match_id_counter += 1)
   end
 
   private def resolve_users(users : Array(UInt64), cache : Discord::Cache) : String?
