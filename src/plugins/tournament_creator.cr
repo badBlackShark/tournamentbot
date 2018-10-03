@@ -9,7 +9,7 @@ module TournamentBot::TournamentCreator
 
     def initialize
       @tournaments = Hash(UInt64, Tournament).new
-      @parser      = Time::Format.new("%d.%m. %I:%M%p", Time::Location.fixed("UTC", 0))
+      @parser      = Time::Format.new("%d.%m.%y %I:%M%p", Time::Location.fixed("UTC", 0))
       load_tournaments
     end
 
@@ -68,7 +68,7 @@ module TournamentBot::TournamentCreator
       guild = ctx[GuildChecker::Result].id
 
       name = @tournaments[guild].name
-      File.delete("./tournaments/#{guild}.yml")
+      File.delete("./tournament-files/#{guild}.yml")
       @tournaments.delete(guild)
 
       client.create_message(payload.channel_id, "The tournament *#{name}* was successfully deleted.")
@@ -404,7 +404,7 @@ module TournamentBot::TournamentCreator
       begin
         time = @parser.parse(time_raw)
       rescue e : Time::Format::Error
-        client.create_message(payload.channel_id, "Please provide the time in the required format (DD.MM. HH:MMam/pm).")
+        client.create_message(payload.channel_id, "Please provide the time in the required format (DD.MM.YY HH:MMam/pm).")
         return
       end
 
