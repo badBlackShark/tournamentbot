@@ -6,6 +6,6 @@ class Command
   end
 
   def call(payload : Discord::Message, context : Discord::Context)
-    yield if payload.content.downcase.starts_with?(@name)
+    yield if payload.content.downcase.starts_with?("#{@name} ") || payload.content.downcase == @name
   end
 end
