@@ -4,7 +4,7 @@ class TournamentBot::Info
 
   @[Discord::Handler(event: :message_create, middleware: Command.new("!info"))]
   def info(payload, _ctx)
-    bot = client.cache.try &.resolve_user(CLIENT_ID)
+    bot = client.cache.try &.resolve_user(TournamentBot.config.client_id)
     return unless bot
 
     embed = Discord::Embed.new

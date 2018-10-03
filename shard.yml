@@ -14,4 +14,4 @@ license: MIT
 
 targets:
   tournamentbot:
-    main: src/tournamentbot.cr
+    main: src/entrypoint.cr

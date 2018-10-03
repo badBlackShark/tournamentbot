@@ -1,0 +1,5 @@
+language: crystal
+script:
+  - shards install
+  - crystal spec
+  - shards build --no-codegen
