@@ -31,14 +31,8 @@ module TournamentBot
     end
   end
 
-<<<<<<< HEAD
-  AUTH      = YAML.parse(File.read("./src/config.yml"))
-  OWNER_ID  = AUTH["owner"].as_i.to_u64
-  CLIENT_ID = AUTH["client_id"].as_i.to_u64
   FORMATTER = Time::Format.new("%A, %-d.%-m.2018 at %I:%M%p UTC+0", Time::Location.fixed("UTC", 0))
-=======
   class_getter! config : Config
->>>>>>> b7110f2311e5599a362100690148accdfbe90f51
 
   def self.run(config : Config)
     @@config = config
