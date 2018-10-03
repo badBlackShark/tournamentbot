@@ -410,6 +410,7 @@ module TournamentBot::TournamentCreator
 
       @tournaments[guild].add_match(payload.mentions.map { |e| e.id.to_u64 }, time)
       client.create_message(payload.channel_id, "Added match between **#{payload.mentions.map { |e| e.username }.join("**, **")}** on *#{FORMATTER.format(time)}*.")
+      save(@tournaments[guild])
     end
 
     private def load_tournaments
