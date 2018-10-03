@@ -1,4 +1,5 @@
 require "yaml"
+require "time"
 require "discordcr"
 require "discordcr-plugin"
 require "discordcr-middleware"
@@ -11,12 +12,12 @@ require "./tournaments/*"
 module TournamentBot
   class Bot
     getter client : Discord::Client
-    getter cache : Discord::Cache
+    getter cache  : Discord::Cache
     delegate run, stop, to: client
 
     def initialize
       @client = Discord::Client.new(token: "Bot #{AUTH["token"].as_s}", client_id: CLIENT_ID)
-      @cache = Discord::Cache.new(@client)
+      @cache  = Discord::Cache.new(@client)
       @client.cache = @cache
       register_plugins
     end
@@ -29,6 +30,7 @@ module TournamentBot
   AUTH      = YAML.parse(File.read("./src/config.yml"))
   OWNER_ID  = AUTH["owner"].as_i.to_u64
   CLIENT_ID = AUTH["client_id"].as_i.to_u64
+  FORMATTER = Time::Format.new("%A, %-d.%-m.2018 at %I:%M%p UTC+0", Time::Location.fixed("UTC", 0))
 
   def self.run
     bot = Bot.new
