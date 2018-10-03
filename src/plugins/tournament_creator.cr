@@ -9,6 +9,7 @@ module TournamentBot::TournamentCreator
 
     def initialize
       @tournaments = Hash(UInt64, Tournament).new
+      @parser      = Time::Format.new("%d.%m. %I:%M%p", Time::Location.fixed("UTC", 0))
       load_tournaments
     end
 
@@ -373,6 +374,42 @@ module TournamentBot::TournamentCreator
 
       @tournaments[guild].started = true
       client.create_message(payload.channel_id, "The tournament *#{@tournaments[guild].name}* has been started!")
+    end
+
+    @[Discord::Handler(
+      event: :message_create,
+      middleware: {
+        Command.new("!createMatch"),
+        GuildChecker.new,
+        TournamentChecker.new(@tournaments),
+        PermissionChecker.new(@tournaments, Permission::Host),
+        MentionChecker.new(2),
+        ArgumentChecker.new(3)
+      }
+    )]
+    def create_match(payload, ctx)
+      # ("%-d.%-m. %-I:%-M%p")
+      guild = ctx[GuildChecker::Result].id
+      args  = ctx[ArgumentChecker::Result].args
+
+      payload.mentions.each do |participant|
+        unless @tournaments[guild].participants.includes?(participant.id.to_u64)
+          client.create_message(payload.channel_id, "All mentioned people need to be participants in the tournament.")
+          return
+        end
+      end
+
+      time_raw = args.reject { |e| e =~ /<@\d+>/ }.join(" ")
+      time = Time.new
+      begin
+        time = @parser.parse(time_raw)
+      rescue e : Time::Format::Error
+        client.create_message(payload.channel_id, "Please provide the time in the required format (DD.MM. HH:MMam/pm).")
+        return
+      end
+
+      @tournaments[guild].add_match(payload.mentions.map { |e| e.id.to_u64 }, time)
+      client.create_message(payload.channel_id, "Added match between **#{payload.mentions.map { |e| e.username }.join("**, **")}** on *#{FORMATTER.format(time)}*.")
     end
 
     private def load_tournaments
