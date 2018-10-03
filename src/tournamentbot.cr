@@ -31,7 +31,7 @@ module TournamentBot
     end
   end
 
-  FORMATTER = Time::Format.new("%A, %-d.%-m.2018 at %I:%M%p UTC+0", Time::Location.fixed("UTC", 0))
+  FORMATTER = Time::Format.new("%A, %-d.%-m.%Y at %I:%M%p UTC", Time::Location.fixed("UTC", 0))
   class_getter! config : Config
 
   def self.run(config : Config)
