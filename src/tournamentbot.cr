@@ -1,5 +1,4 @@
 require "yaml"
-require "time"
 require "discordcr"
 require "discordcr-plugin"
 require "discordcr-middleware"
@@ -8,6 +7,7 @@ require "discordcr-middleware/middleware/prefix"
 Dir.mkdir_p("./tournament-files")
 
 require "./config"
+require "./utility"
 require "./plugins/*"
 require "./middlewares/*"
 require "./tournaments/*"
@@ -31,7 +31,6 @@ module TournamentBot
     end
   end
 
-  FORMATTER = Time::Format.new("%A, %-d.%-m.%Y at %I:%M%p UTC", Time::Location.fixed("UTC", 0))
   class_getter! config : Config
 
   def self.run(config : Config)
