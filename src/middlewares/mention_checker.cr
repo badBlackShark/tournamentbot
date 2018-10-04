@@ -1,5 +1,5 @@
 # Checks if a certain amount of mentions are present in a message.
-class MentionChecker
+class TournamentBot::MentionChecker
   getter min_mentions : Int32?
   getter max_mentions : Int32?
 

@@ -1,4 +1,4 @@
-class Command
+class TournamentBot::Command
   getter name : String
 
   def initialize(name : String)
