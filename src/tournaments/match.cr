@@ -1,4 +1,4 @@
-class Match
+class TournamentBot::Match
   include YAML::Serializable
 
   getter participants : Array(UInt64)
@@ -9,6 +9,6 @@ class Match
   end
 
   def to_s
-    "Match ##{@id}: #{participants.map { |e| "<@#{e}>" }.join(" vs ")} on #{FORMATTER.parse(@time)}"
+    "Match ##{@id}: #{participants.map { |e| "<@#{e}>" }.join(" vs ")} on #{Utility.format_time(@time)}"
   end
 end

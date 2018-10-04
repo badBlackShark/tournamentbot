@@ -1,7 +1,7 @@
 require "yaml"
 
 module TournamentBot::TournamentCreator
-  @[Discord::Plugin::Options(middleware: DiscordMiddleware::Prefix.new("!"))]
+  @[Discord::Plugin::Options()]
   class TournamentBot::TournamentCommands
     include Discord::Plugin
 
@@ -290,9 +290,33 @@ module TournamentBot::TournamentCreator
         return
       end
       @tournaments[guild].participants.delete(payload.author.id.to_u64)
+      @tournaments[guild].clean_matches(payload.author.id.to_u64)
 
       save(@tournaments[guild])
       client.create_message(payload.channel_id, "<@#{payload.author.id.to_u64}>, you have successfully dropped out of the tournament **#{@tournaments[guild].name}**!")
+    end
+
+    @[Discord::Handler(
+      event: :message_create,
+      middleware: {
+        Command.new("!remove"),
+        GuildChecker.new,
+        TournamentChecker.new(@tournaments),
+        PermissionChecker.new(@tournaments, Permission::Host)
+      }
+    )]
+    def remove(payload, ctx)
+      guild = ctx[GuildChecker::Result].id
+      user  = payload.mentions.first
+      unless @tournaments[guild].participants.includes?(user.id.to_u64)
+        client.create_message(payload.channel_id, "#{user.username}##{user.discriminator} isn't part of the tournament **#{@tournaments[guild].name}**.")
+        return
+      end
+      @tournaments[guild].participants.delete(user.id.to_u64)
+      @tournaments[guild].clean_matches(user.id.to_u64)
+
+      save(@tournaments[guild])
+      client.create_message(payload.channel_id, "<@#{user.id.to_u64}> has successfully been removed from the tournament **#{@tournaments[guild].name}**.")
     end
 
     @[Discord::Handler(
@@ -374,6 +398,7 @@ module TournamentBot::TournamentCreator
 
       @tournaments[guild].started = true
       client.create_message(payload.channel_id, "The tournament *#{@tournaments[guild].name}* has been started!")
+      save(@tournaments[guild])
     end
 
     @[Discord::Handler(
@@ -388,7 +413,6 @@ module TournamentBot::TournamentCreator
       }
     )]
     def create_match(payload, ctx)
-      # ("%-d.%-m. %-I:%-M%p")
       guild = ctx[GuildChecker::Result].id
       args  = ctx[ArgumentChecker::Result].args
 
@@ -409,8 +433,68 @@ module TournamentBot::TournamentCreator
       end
 
       @tournaments[guild].add_match(payload.mentions.map { |e| e.id.to_u64 }, time)
-      client.create_message(payload.channel_id, "Added match between **#{payload.mentions.map { |e| e.username }.join("**, **")}** on *#{FORMATTER.format(time)}*.")
+      client.create_message(payload.channel_id, "Added match between **#{payload.mentions.map { |e| e.username }.join("**, **")}** on *#{Utility.format_time(time)}*.")
       save(@tournaments[guild])
+    end
+
+    @[Discord::Handler(
+      event: :message_create,
+      middleware: {
+        Command.new("!nextMatch"),
+        GuildChecker.new,
+        TournamentChecker.new(@tournaments),
+        PermissionChecker.new(@tournaments, Permission::Volunteer),
+      }
+    )]
+    def next_match(payload, ctx)
+      guild = ctx[GuildChecker::Result].id
+      match = @tournaments[guild].matches[0]?
+
+      if match
+        @tournaments[guild].start_next
+        client.create_message(payload.channel_id, "#{match.participants.map { |e| "<@#{e}>" }.join(", ")}, your match, which was scheduled for #{Utility.format_time(match.time)}, is starting now!")
+        save(@tournaments[guild])
+      else
+        client.create_message(payload.channel_id, "There are currently no more scheduled matches.")
+      end
+    end
+
+    @[Discord::Handler(
+      event: :message_create,
+      middleware: {
+        Command.new("!deleteMatch"),
+        GuildChecker.new,
+        TournamentChecker.new(@tournaments),
+        PermissionChecker.new(@tournaments, Permission::Volunteer),
+        ArgumentChecker.new(1)
+      }
+    )]
+    def delete_match(payload, ctx)
+      id = ctx[ArgumentChecker::Result].args.first.to_i
+      guild = ctx[GuildChecker::Result].id
+      match = @tournaments[guild].matches.find { |match| match.id == id }
+      if match
+        @tournaments[guild].matches.delete(match)
+        client.create_message(payload.channel_id, "The match #{match.participants.map { |e| "<@#{e}>" }.join(" vs ")}, which was scheduled for #{Utility.format_time(match.time)}, has been deleted.")
+        @tournaments[guild].update_next
+        save(@tournaments[guild])
+      else
+        client.create_message(payload.channel_id, "No match with ID #{id} exists.")
+      end
+    rescue e : ArgumentError
+      client.create_message(payload.channel_id, "Please provide an Integer ID.")
+    end
+
+    @[Discord::Handler(
+      event: :message_create,
+      middleware: {
+        Command.new("!matchList"),
+        GuildChecker.new,
+        TournamentChecker.new(@tournaments),
+      }
+    )]
+    def match_list(payload, ctx)
+      client.create_message(payload.channel_id, "", @tournaments[ctx[GuildChecker::Result].id].match_list_embed(client.cache))
     end
 
     private def load_tournaments
@@ -420,6 +504,7 @@ module TournamentBot::TournamentCreator
           next if name =~ /^\.\.?$/
           guild_id = name.split(".").first
           @tournaments[guild_id.to_u64] = Tournament.from_yaml(File.read("./tournament-files/#{name}"))
+          @tournaments[guild_id.to_u64].update_next
         end
       end
     end
