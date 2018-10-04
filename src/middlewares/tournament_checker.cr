@@ -1,5 +1,5 @@
 # Checks if a tournament is present in the guild a command was called in.
-class TournamentChecker
+class TournamentBot::TournamentChecker
   getter tournaments : Hash(UInt64, Tournament)
 
   def initialize(@tournaments : Hash(UInt64, Tournament))

@@ -1,5 +1,5 @@
 # Checks if the person calling the command has the necessary permissions to do so.
-class PermissionChecker
+class TournamentBot::PermissionChecker
   getter permission : Permission
   getter tournaments : Hash(UInt64, Tournament)
 

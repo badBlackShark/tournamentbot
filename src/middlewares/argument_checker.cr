@@ -1,4 +1,4 @@
-class ArgumentChecker
+class TournamentBot::ArgumentChecker
   class Result
     getter args : Array(String)
 

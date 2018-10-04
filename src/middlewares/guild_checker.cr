@@ -1,5 +1,5 @@
 # Checks if a command was called in a guild (as opposed to a DM channel.)
-class GuildChecker
+class TournamentBot::GuildChecker
   class Result
     getter id : UInt64
 
