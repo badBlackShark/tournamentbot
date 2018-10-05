@@ -307,7 +307,17 @@ module TournamentBot::TournamentCreator
     )]
     def remove(payload, ctx)
       guild = ctx[GuildChecker::Result].id
-      user  = payload.mentions.first
+      user = if payload.mentions.empty?
+        begin
+          _, id = payload.content.split(" ", remove_empty: true)
+          TournamentBot.bot.cache.resolve_user(id.to_u64)
+        rescue e : Exception
+          client.create_message(payload.channel_id, "Please provide a valid user ID.")
+          return
+        end
+      else
+        payload.mentions.first
+      end
       unless @tournaments[guild].participants.includes?(user.id.to_u64)
         client.create_message(payload.channel_id, "#{user.username}##{user.discriminator} isn't part of the tournament **#{@tournaments[guild].name}**.")
         return
