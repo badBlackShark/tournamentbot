@@ -22,7 +22,7 @@ module TournamentBot
     def initialize(token : String, @client_id : UInt64, shard_id, num_shards)
       @client = Discord::Client.new(token: "Bot #{token}", client_id: @client_id,
                                     shard: {shard_id: shard_id, num_shards: num_shards})
-      @cache = Discord::Cache.new(@client)
+      @cache  = Discord::Cache.new(@client)
       @client.cache = @cache
       register_plugins
     end
@@ -36,7 +36,7 @@ module TournamentBot
 
   @@shards = [] of Bot
 
-  def self.bot(guild_id : UInt64 | Snowflake | Nil = nil)
+  def self.bot(guild_id : UInt64 | Discord::Snowflake | Nil = nil)
     if guild_id
       shard_id = (guild_id >> 22) % config.shard_count
       @@shards[shard_id]
