@@ -507,6 +507,12 @@ module TournamentBot::TournamentCreator
           @tournaments[guild_id.to_u64].update_next
         end
       end
+
+      @tournaments.each_value do |tournament|
+        tournament.matches.each do |match|
+          match.schedule
+        end
+      end
     end
 
     private def save(tournament : Tournament)

@@ -97,14 +97,11 @@ class TournamentBot::Tournament
 
   # Clears all the matches from a participant that left the tournament.
   def clean_matches(participant : UInt64)
-    to_delete = Array(Match).new
-    @matches.each do |match|
+    @matches.dup.each do |match|
       if match.participants.includes?(participant)
-        to_delete << match
+        @matches.delete(match)
       end
     end
-
-    @matches -= to_delete
   end
 
   def start_next

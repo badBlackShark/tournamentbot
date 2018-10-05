@@ -36,6 +36,7 @@ module TournamentBot
   def self.run(config : Config)
     @@config = config
     bot = Bot.new(config.token, config.client_id)
+    Utility.store_client(bot.client)
     bot.run
   end
 end
