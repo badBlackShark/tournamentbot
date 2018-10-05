@@ -1,4 +1,4 @@
-@[Discord::Plugin::Options(middleware: DiscordMiddleware::Prefix.new("!"))]
+@[Discord::Plugin::Options()]
 class TournamentBot::Info
   include Discord::Plugin
 

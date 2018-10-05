@@ -1,4 +1,4 @@
-class Tournament
+class TournamentBot::Tournament
   include Random::Secure
   include YAML::Serializable
 
@@ -14,7 +14,6 @@ class Tournament
   property started          : Bool
   property maps             : Array(String)
   property matches          : Array(Match)
-  property current_match    : String
   property next_match       : String
   property match_id_counter : Int32
 
@@ -32,12 +31,11 @@ class Tournament
     @started          = false
     @maps             = Array(String).new
     @matches          = Array(Match).new
-    @current_match    = ""
     @next_match       = ""
     @match_id_counter = 0
   end
 
-  def to_embed(cache : Discord::Cache?)
+  def to_embed(cache : Discord::Cache?) : Discord::Embed
     return Discord::Embed.new(title: "Can't create embed without cache.") if cache.nil?
 
     embed = Discord::Embed.new
@@ -66,7 +64,7 @@ class Tournament
       embed.footer = Discord::EmbedFooter.new(text: "This tournament has already started, you can not sign up for it any longer.")
       embed.colour = 0xFF0000
 
-      fields << Discord::EmbedField.new(name: "Current match:", value: @current_match)
+      fields << Discord::EmbedField.new(name: "Next match", value: @next_match)
     else
       embed.footer = Discord::EmbedFooter.new(text: "This tournament hasn't started yet. Join it by typing \"!join\"!")
       embed.colour = 0x00FF00
@@ -76,14 +74,50 @@ class Tournament
     embed
   end
 
-  def advance_match
-    @current_match = @next_match
-    @next_match = @matches[0]?.to_s
+  def match_list_embed(cache : Discord::Cache?) : Discord::Embed
+    return Discord::Embed.new(title: "Can't create embed without cache.") if cache.nil?
+
+    embed   = Discord::Embed.new
+    matches = @matches
+    field   = ""
+    if matches.empty?
+      field = "There's currently no match scheduled."
+    else
+      field = matches.map { |match| "**##{match.id}**: #{match.participants.map { |p| "<@#{p}>" }.join(" vs ")}\n#{Utility.format_time(match.time)}\n\n" }.join
+    end
+
+    embed.title       = "All matches currently scheduled for __#{@name}__"
+    embed.description = "Click [here](https://time.is/UTC) to see what time it is in UTC right now."
+    embed.fields      = [Discord::EmbedField.new(name: "Match list", value: field)]
+    embed.colour      = 0xFF00AA
+    embed.footer      = Discord::EmbedFooter.new(text: "Please be online 30 minutes before your match starts, and remember that all times are in UTC!")
+
+    embed
+  end
+
+  # Clears all the matches from a participant that left the tournament.
+  def clean_matches(participant : UInt64)
+    @matches.dup.each do |match|
+      if match.participants.includes?(participant)
+        @matches.delete(match)
+      end
+    end
+  end
+
+  def start_next
+    @next_match = @matches[1]? ? matches[1].to_s : "*There's currently no match scheduled.*"
     @matches.delete(@matches[0]?)
+  end
+
+  def update_next
+    @next_match = @matches[0]? ? matches[0].to_s : "*There's currently no match scheduled.*"
   end
 
   def add_match(participants : Array(UInt64), time : Time)
     @matches << Match.new(participants, time, @match_id_counter += 1)
+    @matches = @matches.sort_by { |match| match.time }
+
+    update_next
   end
 
   private def resolve_users(users : Array(UInt64), cache : Discord::Cache) : String?

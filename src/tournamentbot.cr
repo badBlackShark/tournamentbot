@@ -1,5 +1,4 @@
 require "yaml"
-require "time"
 require "discordcr"
 require "discordcr-plugin"
 require "discordcr-middleware"
@@ -8,6 +7,7 @@ require "discordcr-middleware/middleware/prefix"
 Dir.mkdir_p("./tournament-files")
 
 require "./config"
+require "./utility"
 require "./plugins/*"
 require "./middlewares/*"
 require "./tournaments/*"
@@ -22,7 +22,7 @@ module TournamentBot
     def initialize(token : String, @client_id : UInt64, shard_id, num_shards)
       @client = Discord::Client.new(token: "Bot #{token}", client_id: @client_id,
                                     shard: {shard_id: shard_id, num_shards: num_shards})
-      @cache = Discord::Cache.new(@client)
+      @cache  = Discord::Cache.new(@client)
       @client.cache = @cache
       register_plugins
     end
@@ -32,12 +32,11 @@ module TournamentBot
     end
   end
 
-  FORMATTER = Time::Format.new("%A, %-d.%-m.2018 at %I:%M%p UTC+0", Time::Location.fixed("UTC", 0))
   class_getter! config : Config
 
   @@shards = [] of Bot
 
-  def self.bot(guild_id : UInt64 | Snowflake | Nil = nil)
+  def self.bot(guild_id : UInt64 | Discord::Snowflake | Nil = nil)
     if guild_id
       shard_id = (guild_id >> 22) % config.shard_count
       @@shards[shard_id]
