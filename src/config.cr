@@ -5,6 +5,7 @@ module TournamentBot
     getter token : String
     getter owner_id : UInt64
     getter client_id : UInt64
+    getter shard_count : Int32 = 1
 
     def initialize(@token : String, @owner_id : UInt64, @client_id : UInt64)
     end
