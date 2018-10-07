@@ -35,9 +35,8 @@ class TournamentBot::Tournament
     @match_id_counter = 0
   end
 
-  def to_embed(cache : Discord::Cache?) : Discord::Embed
-    return Discord::Embed.new(title: "Can't create embed without cache.") if cache.nil?
-
+  def to_embed : Discord::Embed
+    cache = TournamentBot.bot.cache
     embed = Discord::Embed.new
 
     # Needed for the nil check to work.
@@ -74,16 +73,40 @@ class TournamentBot::Tournament
     embed
   end
 
-  def match_list_embed(cache : Discord::Cache?) : Discord::Embed
-    return Discord::Embed.new(title: "Can't create embed without cache.") if cache.nil?
+  def map_embed
+    cache  = TournamentBot.bot.cache
+    embed  = Discord::Embed.new
+    fields = Array(Discord::EmbedField).new
 
+    embed.title = "The map pool for the tournament #{@name}"
+
+    nr_of_fields  = (@maps.size / 10.0).ceil.to_i
+    field_nr      = 0
+    map_nr        = 0
+
+    @maps.each_slice(10) do |maps|
+      fields << Discord::EmbedField.new(
+        name: "Maps (#{field_nr += 1}/#{nr_of_fields})",
+        value: maps.map { |m| "##{map_nr += 1}: #{m}" }.join("\n"),
+        inline: true
+      )
+    end
+
+    embed.fields = fields
+    embed.colour = 0xFF00AA
+
+    embed
+  end
+
+  def match_list_embed : Discord::Embed
+    cache = TournamentBot.bot.cache
     embed   = Discord::Embed.new
     matches = @matches
-    field   = ""
-    if matches.empty?
-      field = "There's currently no match scheduled."
+
+    field = if matches.empty?
+      "There's currently no match scheduled."
     else
-      field = matches.map { |match| "**##{match.id}**: #{match.participants.map { |p| "<@#{p}>" }.join(" vs ")}\n#{Utility.format_time(match.time)}\n\n" }.join
+      matches.map { |match| "**##{match.id}**: #{match.participants.map { |p| "<@#{p}>" }.join(" vs ")}\n#{Utility.format_time(match.time)}\n\n" }.join
     end
 
     embed.title       = "All matches currently scheduled for __#{@name}__"

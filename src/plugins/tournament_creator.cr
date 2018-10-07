@@ -32,7 +32,7 @@ module TournamentBot::TournamentCreator
       end
 
       tournament = Tournament.new(author, guild, name)
-      embed = tournament.to_embed(client.cache)
+      embed = tournament.to_embed
 
       @tournaments[guild] = tournament
 
@@ -52,7 +52,7 @@ module TournamentBot::TournamentCreator
     def tournament(payload, ctx)
       guild = ctx[GuildChecker::Result].id
 
-      client.create_message(payload.channel_id,"", @tournaments[guild].to_embed(client.cache))
+      client.create_message(payload.channel_id,"", @tournaments[guild].to_embed)
     end
 
     @[Discord::Handler(
@@ -504,7 +504,45 @@ module TournamentBot::TournamentCreator
       }
     )]
     def match_list(payload, ctx)
-      client.create_message(payload.channel_id, "", @tournaments[ctx[GuildChecker::Result].id].match_list_embed(client.cache))
+      client.create_message(payload.channel_id, "", @tournaments[ctx[GuildChecker::Result].id].match_list_embed)
+    end
+
+    @[Discord::Handler(
+      event: :message_create,
+      middleware: {
+        Command.new("!setMaps"),
+        GuildChecker.new,
+        TournamentChecker.new(@tournaments),
+        PermissionChecker.new(@tournaments, Permission::Host)
+      }
+    )]
+    def set_maps(payload, ctx)
+      guild = ctx[GuildChecker::Result].id
+      # None should always be an available option, for the disrespect bans.
+      maps = payload.content[9..-1].split(", ") << "None"
+      @tournaments[guild].maps = maps
+
+      save(@tournaments[guild])
+
+      client.create_message(payload.channel_id, "Set the tournament's map pool to *#{maps.join("*, *")}*.")
+    end
+
+    @[Discord::Handler(
+      event: :message_create,
+      middleware: {
+        Command.new("!maps"),
+        GuildChecker.new,
+        TournamentChecker.new(@tournaments)
+      }
+    )]
+    def maps(payload, ctx)
+      guild = ctx[GuildChecker::Result].id
+
+      if @tournaments[guild].maps.empty?
+        client.create_message(payload.channel_id, "There are no maps set for this tournament.")
+      else
+        client.create_message(payload.channel_id, "", @tournaments[guild].map_embed)
+      end
     end
 
     private def load_tournaments
