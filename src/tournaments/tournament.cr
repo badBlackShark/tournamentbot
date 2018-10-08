@@ -16,6 +16,7 @@ class TournamentBot::Tournament
   property matches          : Array(Match)
   property next_match       : String
   property match_id_counter : Int32
+  property draft_role       : UInt64
 
 
   def initialize(author : UInt64, guild : UInt64, name : String?)
@@ -33,6 +34,12 @@ class TournamentBot::Tournament
     @matches          = Array(Match).new
     @next_match       = ""
     @match_id_counter = 0
+
+    @draft_role = if draft_role = TournamentBot.bot.cache.resolve_guild(@guild).roles.find { |r| r.name == "draft" }
+      draft_role.id.to_u64
+    else
+      TournamentBot.bot.client.create_guild_role(@guild, "draft", mentionable: true).id.to_u64
+    end
   end
 
   def to_embed : Discord::Embed
@@ -141,6 +148,12 @@ class TournamentBot::Tournament
     @matches = @matches.sort_by { |match| match.time }
 
     update_next
+  end
+
+  def validate_draft_role
+    unless TournamentBot.bot.cache.guild_roles(@guild).find { |r| r == @draft_role }
+      @draft_role = TournamentBot.bot.client.create_guild_role(@guild, "draft", mentionable: true).id.to_u64
+    end
   end
 
   private def resolve_users(users : Array(UInt64), cache : Discord::Cache) : String?

@@ -4,8 +4,12 @@ class TournamentBot::Match
   getter participants : Array(UInt64)
   getter time : Time
   getter id : Int32
+  # Every match will have a dedicated draft pick channel created for it.
+  # This gets stored so the match can be deleted later
+  property channel : UInt64
 
   def initialize(@participants : Array(UInt64), @time : Time, @id : Int32)
+    @channel = 0
     schedule
   end
 
