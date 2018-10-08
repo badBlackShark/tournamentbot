@@ -75,6 +75,7 @@ module TournamentBot::TournamentManager
 
       name = TournamentManager.tournaments[guild].name
       File.delete("./tournament-files/#{guild}.yml")
+      TournamentBot.bot.client.delete_guild_role(guild, TournamentManager.tournaments[guild].draft_role)
       TournamentManager.tournaments.delete(guild)
 
       client.create_message(payload.channel_id, "The tournament *#{name}* was successfully deleted.")
@@ -406,15 +407,22 @@ module TournamentBot::TournamentManager
     )]
     def start(payload, ctx)
       guild = ctx[GuildChecker::Result].id
+      tournament = TournamentManager.tournaments[guild]
 
-      if TournamentManager.tournaments[guild].started
-        client.create_message(payload.channel_id, "The tournament *#{TournamentManager.tournaments[guild].name}* has already started.")
+      if tournament.started
+        client.create_message(payload.channel_id, "The tournament *#{tournament.name}* has already started.")
         return
       end
 
-      TournamentManager.tournaments[guild].started = true
-      client.create_message(payload.channel_id, "The tournament *#{TournamentManager.tournaments[guild].name}* has been started!")
-      TournamentManager.save(TournamentManager.tournaments[guild])
+      tournament.started = true
+
+      staff = (tournament.hosts + tournament.volunteers).uniq
+      staff.each do |s|
+        TournamentBot.bot.client.add_guild_member_role(guild, s, tournament.draft_role)
+      end
+
+      client.create_message(payload.channel_id, "The tournament *#{tournament.name}* has been started! All staff members have received the draft pick role.")
+      TournamentManager.save(tournament)
     end
 
     @[Discord::Handler(
@@ -453,6 +461,22 @@ module TournamentBot::TournamentManager
       else
         client.create_message(payload.channel_id, "", TournamentManager.tournaments[guild].map_embed)
       end
+    end
+
+    @[Discord::Handler(
+      event: :message_create,
+      middleware: {
+        Command.new("!updateDraftRole"),
+        GuildChecker.new,
+        TournamentChecker.new(TournamentManager.tournaments)
+      }
+    )]
+    def update_draft_role(payload, ctx)
+      guild = ctx[GuildChecker::Result].id
+      TournamentManager.tournaments[guild].validate_draft_role
+
+      TournamentManager.save(TournamentManager.tournaments[guild])
+      client.create_message(payload.channel_id, "The draft pick role has been validated and - if necessary - recreated.")
     end
 
     private def load_tournaments
