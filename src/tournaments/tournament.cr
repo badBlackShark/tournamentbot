@@ -1,3 +1,5 @@
+require "levenshtein"
+
 class TournamentBot::Tournament
   include Random::Secure
   include YAML::Serializable
@@ -13,10 +15,14 @@ class TournamentBot::Tournament
   property bracket          : String
   property started          : Bool
   property maps             : Array(String)
+  property default_bans     : Array(String)
   property matches          : Array(Match)
   property next_match       : String
   property match_id_counter : Int32
   property draft_role       : UInt64
+  property match_history    : MatchHistory
+  property bans_per_player  : Int32
+  property picks_per_player : Int32
 
 
   def initialize(author : UInt64, guild : UInt64, name : String?)
@@ -31,9 +37,13 @@ class TournamentBot::Tournament
     @bracket          = "*No bracket set for this tournament yet.*"
     @started          = false
     @maps             = Array(String).new
+    @default_bans     = Array(String).new
     @matches          = Array(Match).new
     @next_match       = ""
     @match_id_counter = 0
+    @match_history    = MatchHistory.new(Array(Match).new)
+    @bans_per_player  = 0
+    @picks_per_player = 0
 
     @draft_role = if draft_role = TournamentBot.bot.cache.resolve_guild(@guild).roles.find { |r| r.name == "draft" }
       draft_role.id.to_u64
@@ -71,6 +81,8 @@ class TournamentBot::Tournament
       embed.colour = 0xFF0000
 
       fields << Discord::EmbedField.new(name: "Next match", value: @next_match)
+      fields << Discord::EmbedField.new(name: "Bans per player", value: @bans_per_player.to_s, inline: true)
+      fields << Discord::EmbedField.new(name: "Picks per player", value: @picks_per_player.to_s, inline: true)
     else
       embed.footer = Discord::EmbedFooter.new(text: "This tournament hasn't started yet. Join it by typing \"!join\"!")
       embed.colour = 0x00FF00
@@ -135,8 +147,12 @@ class TournamentBot::Tournament
   end
 
   def start_next
-    @next_match = @matches[1]? ? matches[1].to_s : "*There's currently no match scheduled.*"
-    @matches.delete(@matches[0]?)
+    matches[0].start_draft(@guild, @draft_role) if matches[0]
+    @next_match = if @matches[1]?
+      matches[1].to_s
+    else
+      "*There's currently no match scheduled.*"
+    end
   end
 
   def update_next
@@ -144,7 +160,7 @@ class TournamentBot::Tournament
   end
 
   def add_match(participants : Array(UInt64), time : Time)
-    @matches << Match.new(participants, time, @match_id_counter += 1)
+    @matches << Match.new(participants, time, @match_id_counter += 1, self)
     @matches = @matches.sort_by { |match| match.time }
 
     update_next
@@ -154,6 +170,15 @@ class TournamentBot::Tournament
     unless TournamentBot.bot.cache.guild_roles(@guild).find { |r| r == @draft_role }
       @draft_role = TournamentBot.bot.client.create_guild_role(@guild, "draft", mentionable: true).id.to_u64
     end
+  end
+
+  def select_map(name : String)
+    res = Utility.fuzzy_match(name, @maps)
+    return res.empty? ? nil : res
+  end
+
+  def random_map
+    @maps.sample
   end
 
   private def resolve_users(users : Array(UInt64), cache : Discord::Cache) : String?

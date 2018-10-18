@@ -48,28 +48,6 @@ module TournamentBot::TournamentManager
     @[Discord::Handler(
       event: :message_create,
       middleware: {
-        Command.new("!nextMatch"),
-        GuildChecker.new,
-        TournamentChecker.new(TournamentManager.tournaments),
-        PermissionChecker.new(TournamentManager.tournaments, Permission::Volunteer),
-      }
-    )]
-    def next_match(payload, ctx)
-      guild = ctx[GuildChecker::Result].id
-      match = TournamentManager.tournaments[guild].matches[0]?
-
-      if match
-        TournamentManager.tournaments[guild].start_next
-        client.create_message(payload.channel_id, "#{match.participants.map { |e| "<@#{e}>" }.join(", ")}, your match, which was scheduled for #{Utility.format_time(match.time)}, is starting now!")
-        TournamentManager.save(TournamentManager.tournaments[guild])
-      else
-        client.create_message(payload.channel_id, "There are currently no more scheduled matches.")
-      end
-    end
-
-    @[Discord::Handler(
-      event: :message_create,
-      middleware: {
         Command.new("!deleteMatch"),
         GuildChecker.new,
         TournamentChecker.new(TournamentManager.tournaments),

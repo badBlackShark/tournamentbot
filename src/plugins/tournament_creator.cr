@@ -74,9 +74,9 @@ module TournamentBot::TournamentManager
       guild = ctx[GuildChecker::Result].id
 
       name = TournamentManager.tournaments[guild].name
-      File.delete("./tournament-files/#{guild}.yml")
       TournamentBot.bot.client.delete_guild_role(guild, TournamentManager.tournaments[guild].draft_role)
       TournamentManager.tournaments.delete(guild)
+      File.delete("./tournament-files/#{guild}.yml")
 
       client.create_message(payload.channel_id, "The tournament *#{name}* was successfully deleted.")
     end
@@ -461,6 +461,116 @@ module TournamentBot::TournamentManager
       else
         client.create_message(payload.channel_id, "", TournamentManager.tournaments[guild].map_embed)
       end
+    end
+
+    @[Discord::Handler(
+      event: :message_create,
+      middleware: {
+        Command.new("!setBans"),
+        GuildChecker.new,
+        TournamentChecker.new(TournamentManager.tournaments),
+        PermissionChecker.new(TournamentManager.tournaments, Permission::Host),
+        ArgumentChecker.new(1)
+      }
+    )]
+    def set_bans(payload, ctx)
+      guild = ctx[GuildChecker::Result].id
+      bpp = ctx[ArgumentChecker::Result].args.first.to_i
+      TournamentManager.tournaments[guild].bans_per_player = bpp
+      TournamentManager.save(TournamentManager.tournaments[guild])
+      client.create_message(payload.channel_id, "The tournament's bans per player have been set to #{bpp}.")
+    rescue e : ArgumentError
+      client.create_message(payload.channel_id, "Please provide an integer.")
+    end
+
+    @[Discord::Handler(
+      event: :message_create,
+      middleware: {
+        Command.new("!setPicks"),
+        GuildChecker.new,
+        TournamentChecker.new(TournamentManager.tournaments),
+        PermissionChecker.new(TournamentManager.tournaments, Permission::Host),
+        ArgumentChecker.new(1)
+      }
+    )]
+    def set_picks(payload, ctx)
+      guild = ctx[GuildChecker::Result].id
+      ppp = ctx[ArgumentChecker::Result].args.first.to_i
+      TournamentManager.tournaments[guild].picks_per_player = ppp
+      TournamentManager.save(TournamentManager.tournaments[guild])
+      client.create_message(payload.channel_id, "The tournament's picks per player have been set to #{ppp}.")
+    rescue e : ArgumentError
+      client.create_message(payload.channel_id, "Please provide an integer.")
+    end
+
+    @[Discord::Handler(
+      event: :message_create,
+      middleware: {
+        Command.new("!addDefaultBan"),
+        GuildChecker.new,
+        TournamentChecker.new(TournamentManager.tournaments),
+        PermissionChecker.new(TournamentManager.tournaments, Permission::Host),
+        ArgumentChecker.new(1)
+      }
+    )]
+    def add_default_ban(payload, ctx)
+      guild      = ctx[GuildChecker::Result].id
+      tournament = TournamentManager.tournaments[guild]
+      map        = ctx[ArgumentChecker::Result].args.join(" ")
+      map        = tournament.select_map(map)
+      unless map
+        client.create_message(payload.channel_id, "This map wasn't found in the list of available maps. Please try again.")
+        return
+      end
+      if tournament.default_bans.includes?(map)
+        client.create_message(payload.channel_id, "This map is already banned by default.")
+        return
+      end
+
+      tournament.default_bans << map
+      TournamentManager.save(tournament)
+      client.create_message(payload.channel_id, "Successfully added `#{map}` to the list of default-banned maps.")
+    end
+
+    @[Discord::Handler(
+      event: :message_create,
+      middleware: {
+        Command.new("!removeDefaultBan"),
+        GuildChecker.new,
+        TournamentChecker.new(TournamentManager.tournaments),
+        PermissionChecker.new(TournamentManager.tournaments, Permission::Host),
+        ArgumentChecker.new(1)
+      }
+    )]
+    def remove_default_ban(payload, ctx)
+      guild      = ctx[GuildChecker::Result].id
+      tournament = TournamentManager.tournaments[guild]
+      map        = ctx[ArgumentChecker::Result].args.join(" ")
+      map        = tournament.select_map(map)
+      unless map
+        client.create_message(payload.channel_id, "This map wasn't found in the list of available maps. Please try again.")
+        return
+      end
+      unless tournament.default_bans.includes?(map)
+        client.create_message(payload.channel_id, "This map isn't banned by default.")
+        return
+      end
+
+      tournament.default_bans.delete(map)
+      TournamentManager.save(tournament)
+      client.create_message(payload.channel_id, "Successfully removed `#{map}` from the list of default-banned maps.")
+    end
+
+    @[Discord::Handler(
+      event: :message_create,
+      middleware: {
+        Command.new("!defaultBans"),
+        GuildChecker.new,
+        TournamentChecker.new(TournamentManager.tournaments),
+      }
+    )]
+    def default_bans(payload, ctx)
+      client.create_message(payload.channel_id, "The maps `#{TournamentManager.tournaments[ctx[GuildChecker::Result].id].default_bans.join("`, `")}` are banned by default.")
     end
 
     @[Discord::Handler(

@@ -17,7 +17,9 @@ class TournamentBot::Info
 
           **[discordcr-middleware](https://github.com/z64/discordcr-middleware)** *by z64*
 
-          **[discordcr-plugin](https://github.com/z64/discordcr-plugin)** *by z64*"
+          **[discordcr-plugin](https://github.com/z64/discordcr-plugin)** *by z64*
+
+          **[tasker](https://github.com/spider-gazelle/tasker)** *by spider-gazelle*"
       )
     ]
     embed.colour = 0xf700c5

@@ -10,7 +10,7 @@ shards:
 
   discordcr:
     github: meew0/discordcr
-    commit: 27ba66ac2a693b99f40720ccde6e10587e1895b4
+    commit: a1325222e43b907e74920bb3ca2299ba27fef871
 
   discordcr-middleware:
     github: z64/discordcr-middleware
