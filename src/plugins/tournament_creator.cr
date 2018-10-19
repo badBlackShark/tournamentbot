@@ -506,6 +506,26 @@ module TournamentBot::TournamentManager
     @[Discord::Handler(
       event: :message_create,
       middleware: {
+        Command.new("!setRandomMaps"),
+        GuildChecker.new,
+        TournamentChecker.new(TournamentManager.tournaments),
+        PermissionChecker.new(TournamentManager.tournaments, Permission::Host),
+        ArgumentChecker.new(1)
+      }
+    )]
+    def set_random_maps(payload, ctx)
+      guild = ctx[GuildChecker::Result].id
+      rm = ctx[ArgumentChecker::Result].args.first.to_i
+      TournamentManager.tournaments[guild].random_maps = rm
+      TournamentManager.save(TournamentManager.tournaments[guild])
+      client.create_message(payload.channel_id, "The tournament's random maps per match have been set to #{rm}.")
+    rescue e : ArgumentError
+      client.create_message(payload.channel_id, "Please provide an integer.")
+    end
+
+    @[Discord::Handler(
+      event: :message_create,
+      middleware: {
         Command.new("!addDefaultBan"),
         GuildChecker.new,
         TournamentChecker.new(TournamentManager.tournaments),
@@ -587,6 +607,42 @@ module TournamentBot::TournamentManager
 
       TournamentManager.save(TournamentManager.tournaments[guild])
       client.create_message(payload.channel_id, "The draft pick role has been validated and - if necessary - recreated.")
+    end
+
+    @[Discord::Handler(
+      event: :message_create,
+      middleware: {
+        Command.new("!allowPastPicks"),
+        GuildChecker.new,
+        TournamentChecker.new(TournamentManager.tournaments),
+        PermissionChecker.new(TournamentManager.tournaments, Permission::Host),
+        ArgumentChecker.new(1)
+      }
+    )]
+    def allow_past_picks(payload, ctx)
+      guild = ctx[GuildChecker::Result].id
+      allowed = ctx[ArgumentChecker::Result].args.first == "true"
+      TournamentManager.tournaments[guild].allow_past_picks = allowed
+
+      TournamentManager.save(TournamentManager.tournaments[guild])
+      client.create_message(payload.channel_id, "Picking maps that the player has picked in previous matches is #{allowed ? "now allowed" : "no longer allowed"}.")
+    end
+
+    @[Discord::Handler(
+      event: :message_create,
+      middleware: {
+        Command.new("!clearMatchHistory"),
+        GuildChecker.new,
+        TournamentChecker.new(TournamentManager.tournaments),
+        PermissionChecker.new(TournamentManager.tournaments, Permission::Host)
+      }
+    )]
+    def clear_match_history(payload, ctx)
+      guild = ctx[GuildChecker::Result].id
+      TournamentManager.tournaments[guild].match_history = MatchHistory.new(Array(Match).new)
+      TournamentManager.save(TournamentManager.tournaments[guild])
+
+      client.create_message(payload.channel_id, "The match history has been cleared successfully.")
     end
 
     private def load_tournaments

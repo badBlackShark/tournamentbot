@@ -7,6 +7,12 @@ class TournamentBot::MatchHistory
   end
 
   def add(match : Match)
-    @matches << match
+    @matches.push(match)
+  end
+
+  def picked_map?(player : UInt64, map : String)
+    return @matches.find do |match|
+      match.picks[player]?.try &.includes?(map)
+    end
   end
 end

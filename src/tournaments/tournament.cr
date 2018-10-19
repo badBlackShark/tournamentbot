@@ -1,5 +1,3 @@
-require "levenshtein"
-
 class TournamentBot::Tournament
   include Random::Secure
   include YAML::Serializable
@@ -23,7 +21,9 @@ class TournamentBot::Tournament
   property match_history    : MatchHistory
   property bans_per_player  : Int32
   property picks_per_player : Int32
-
+  property allow_past_picks : Bool
+  property random_maps      : Int32
+  property twitch_channels  : Array(String)
 
   def initialize(author : UInt64, guild : UInt64, name : String?)
     @name             = name.empty? ? Random::Secure.hex(3) : name
@@ -42,8 +42,11 @@ class TournamentBot::Tournament
     @next_match       = ""
     @match_id_counter = 0
     @match_history    = MatchHistory.new(Array(Match).new)
-    @bans_per_player  = 0
-    @picks_per_player = 0
+    @bans_per_player  = 1
+    @picks_per_player = 1
+    @random_maps      = 0
+    @allow_past_picks = true
+    @twitch_channels  = Array(String).new # Unused atm
 
     @draft_role = if draft_role = TournamentBot.bot.cache.resolve_guild(@guild).roles.find { |r| r.name == "draft" }
       draft_role.id.to_u64
@@ -83,6 +86,7 @@ class TournamentBot::Tournament
       fields << Discord::EmbedField.new(name: "Next match", value: @next_match)
       fields << Discord::EmbedField.new(name: "Bans per player", value: @bans_per_player.to_s, inline: true)
       fields << Discord::EmbedField.new(name: "Picks per player", value: @picks_per_player.to_s, inline: true)
+      fields << Discord::EmbedField.new(name: "Picking maps from previous matches", value: @allow_past_picks ? "Allowed" : "Not allowed", inline: true)
     else
       embed.footer = Discord::EmbedFooter.new(text: "This tournament hasn't started yet. Join it by typing \"!join\"!")
       embed.colour = 0x00FF00
@@ -147,12 +151,21 @@ class TournamentBot::Tournament
   end
 
   def start_next
-    matches[0].start_draft(@guild, @draft_role) if matches[0]
-    @next_match = if @matches[1]?
-      matches[1].to_s
-    else
-      "*There's currently no match scheduled.*"
+    if matches[0]? && matches[0].played
+      matches[0].participants.each do |p|
+        TournamentBot.bot.client.remove_guild_member_role(@guild, p, @draft_role) unless (@hosts + @volunteers).includes?(p)
+      end
+      TournamentBot.bot.client.delete_channel(matches[0].channel)
+      @match_history.add(matches.delete_at(0))
     end
+    # This is a different match than in the previous if, since we deleted the last one.
+    if matches[0]?
+      matches[0].start_draft(@guild, @draft_role)
+      matches[0].played = true
+    end
+
+    @next_match = matches[1]?.to_s || "*There's currently no match scheduled.*"
+    matches[0]?
   end
 
   def update_next
