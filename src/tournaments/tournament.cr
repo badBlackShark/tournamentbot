@@ -151,21 +151,21 @@ class TournamentBot::Tournament
   end
 
   def start_next
-    if matches[0]? && matches[0].played
-      matches[0].participants.each do |p|
+    if @matches[0]? && @matches[0].played
+      @matches[0].participants.each do |p|
         TournamentBot.bot.client.remove_guild_member_role(@guild, p, @draft_role) unless (@hosts + @volunteers).includes?(p)
       end
-      TournamentBot.bot.client.delete_channel(matches[0].channel)
-      @match_history.add(matches.delete_at(0))
+      TournamentBot.bot.client.delete_channel(@matches[0].channel)
+      @match_history.add(@matches.delete_at(0))
     end
     # This is a different match than in the previous if, since we deleted the last one.
-    if matches[0]?
-      matches[0].start_draft(@guild, @draft_role)
-      matches[0].played = true
+    if @matches[0]?
+      @matches[0].start_draft(@guild, @draft_role)
+      @matches[0].played = true
     end
 
-    @next_match = matches[1]?.to_s || "*There's currently no match scheduled.*"
-    matches[0]?
+    @next_match = @matches[1]?.to_s || "*There's currently no match scheduled.*"
+    @matches[0]?
   end
 
   def update_next
