@@ -1,0 +1,43 @@
+---
+info:
+- '!tournament': None
+- '!maps': None
+- '!defaultBans': None
+- '!matchList': None
+- '!info': None
+- '!help': None
+misc:
+  - '!join': None
+  - '!leave': Participant
+tournament_manage:
+  - '!create {name}': None
+  - '!delete': Creator
+  - '!addHost <mentions>': Creator
+  - '!removeHost <mentions>': Creator
+  - '!addVolunteer <mentions>': Host
+  - '!removeVolunteer <mentions>': Host
+  - '!addCommentator <mentions>': Host
+  - '!removeCommentator <mentions>': Host
+  - '!removeParticipant <mentions>': Host
+  - '!setBracket <bracket>': Host
+  - '!setGame <game>': Host
+  - '!setName <name>': Creator
+  - '!setMaps <map, map, ...>': Host
+  - '!setBans <# of bans / player>': Host
+  - '!setPicks <# of picks / player>': Host
+  - '!setRandomMaps <# of random maps / game>': Host
+  - '!addDefaultBan <map>': Host
+  - '!removeDefaultBan <map>': Host
+  - '!allowPastPicks <true | false>': Host
+  - '!clearMatchHistory': Host
+  - '!updateDraftRole': Host
+  - '!start': Host
+match_manage:
+  - '!createMatch <mentions> dd.MM.yy hh:mm am/pm': Host
+  - '!deleteMatch <id>': 'Volunteer (or higher)'
+  - '!startNext' : 'Volunteer (or higher)'
+draft:
+  - '!ban <map>': 'Match Participant'
+  - '!pick <map>': 'Match Participant'
+  - '!allow': 'Match Participant'
+  - '!undo': 'Volunteer (or higher)'
