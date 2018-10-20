@@ -8,10 +8,10 @@ class TournamentBot::BanChecker
 
     if bans_left.zero? && !@ban_stage_complete
       context[Discord::Client].create_message(payload.channel_id, "The ban stage has already finished, so you can't use this command anymore.")
-    end
-
-    if !bans_left.zero? && @ban_stage_complete
+    elsif !bans_left.zero? && @ban_stage_complete
       context[Discord::Client].create_message(payload.channel_id, "The ban stage hasn't finished yet, so you can't use this command yet.")
+    else
+      yield
     end
   end
 end
