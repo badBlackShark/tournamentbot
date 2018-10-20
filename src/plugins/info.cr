@@ -8,9 +8,10 @@ class TournamentBot::Info
     return unless bot
 
     embed = Discord::Embed.new
-    embed.author = Discord::EmbedAuthor.new(name: bot.username, icon_url: bot.avatar_url)
-    embed.description = "Developed by [badBlackShark](https://github.com/badBlackShark/), written in [Crystal](https://crystal-lang.org/)"
-    embed.fields = [Discord::EmbedField.new(
+    embed.author      = Discord::EmbedAuthor.new(name: bot.username, icon_url: bot.avatar_url)
+    embed.description = "Developed by [badBlackShark](https://github.com/badBlackShark/), written in [Crystal](https://crystal-lang.org/).\n"\
+                        "The bot's code can be found [here](https://github.com/badBlackShark/tournamentbot)."
+    embed.fields      = [Discord::EmbedField.new(
         name: "Packages Used",
         value:
           "**[discordcr](https://github.com/meew0/discordcr)** *by meew0*
