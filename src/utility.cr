@@ -4,7 +4,7 @@ require "levenshtein"
 
 module TournamentBot::Utility
   def self.format_time(time : Time) : String
-    Time::Format.new("%A, %-d.%-m.%Y at %I:%M%p UTC", Time::Location.fixed("UTC", 0)).format(time)
+    Time::Format.new("%A, %-d.%-m.%Y at %I:%M %p UTC", Time::Location.fixed("UTC", 0)).format(time)
   end
 
   def self.schedule_reminder(targets : Array(UInt64), message : String, time : Time)
