@@ -93,6 +93,7 @@ class TournamentBot::Tournament
     end
 
     embed.fields = fields
+
     embed
   end
 
@@ -164,12 +165,12 @@ class TournamentBot::Tournament
       @matches[0].played = true
     end
 
-    @next_match = @matches[1]?.to_s || "*There's currently no match scheduled.*"
+    @next_match = @matches[1]?.try &.to_s || "*There's currently no match scheduled.*"
     @matches[0]?
   end
 
   def update_next
-    @next_match = @matches[0]? ? matches[0].to_s : "*There's currently no match scheduled.*"
+    @next_match = @matches[0]?.try &.to_s || "*There's currently no match scheduled.*"
   end
 
   def add_match(participants : Array(UInt64), time : Time)

@@ -126,7 +126,7 @@ module TournamentBot::TournamentManager
       hosts = Array(String).new
 
       payload.mentions.each do |host|
-        unless ctx[PermissionChecker].creator?(TournamentManager.tournaments[guild], host.id.to_u64)
+        unless TournamentManager.tournaments[guild].hosts.includes?(host.id.to_u64)
           client.create_message(payload.channel_id, "#{host.username}##{host.discriminator} isn't a host of this tournament.")
           next
         end
@@ -151,7 +151,7 @@ module TournamentBot::TournamentManager
         GuildChecker.new,
         MentionChecker.new(1),
         TournamentChecker.new(TournamentManager.tournaments),
-        PermissionChecker.new(TournamentManager.tournaments, Permission::Creator)
+        PermissionChecker.new(TournamentManager.tournaments, Permission::Host)
       }
     )]
     def add_volunteer(payload, ctx)
@@ -180,7 +180,7 @@ module TournamentBot::TournamentManager
         GuildChecker.new,
         MentionChecker.new(1),
         TournamentChecker.new(TournamentManager.tournaments),
-        PermissionChecker.new(TournamentManager.tournaments, Permission::Creator)
+        PermissionChecker.new(TournamentManager.tournaments, Permission::Host)
       }
     )]
     def remove_volunteer(payload, ctx)
@@ -209,7 +209,7 @@ module TournamentBot::TournamentManager
         GuildChecker.new,
         MentionChecker.new(1),
         TournamentChecker.new(TournamentManager.tournaments),
-        PermissionChecker.new(TournamentManager.tournaments, Permission::Creator)
+        PermissionChecker.new(TournamentManager.tournaments, Permission::Host)
       }
     )]
     def add_commentator(payload, ctx)
@@ -238,7 +238,7 @@ module TournamentBot::TournamentManager
         GuildChecker.new,
         MentionChecker.new(1),
         TournamentChecker.new(TournamentManager.tournaments),
-        PermissionChecker.new(TournamentManager.tournaments, Permission::Creator)
+        PermissionChecker.new(TournamentManager.tournaments, Permission::Host)
       }
     )]
     def remove_commentator(payload, ctx)

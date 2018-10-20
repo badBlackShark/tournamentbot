@@ -49,7 +49,7 @@ class TournamentBot::Match
                       "They can also undo picks / bans for you in case you made a mistake.\n\n"\
                       "By the way, you don't need to spell map names correctly :)"
 
-    welcome_message += "The maps `#{@tournament.default_bans.join("`, `")}` are banned by default, and can't be banned or picked "\
+    welcome_message += "\nThe maps `#{@tournament.default_bans.join("`, `")}` are banned by default, and can't be banned or picked "\
                       "by players or random selection. If you would like to allow them anyway, type `!allow`. "\
                       "All participants of this match will have to agree to this by also typing `!allow`." unless @tournament.default_bans.empty?
 

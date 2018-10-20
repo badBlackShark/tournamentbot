@@ -30,10 +30,10 @@ module TournamentBot::TournamentManager
       if match = tournament.start_next
         @drafts[match.channel] = Draft.new(match, tournament.bans_per_player, tournament.picks_per_player)
         client.create_message(payload.channel_id, "#{match.participants.map { |e| "<@#{e}>" }.join(", ")}, your match, which was scheduled for #{Utility.format_time(match.time)}, is starting now!")
-        TournamentManager.save(tournament)
       else
         client.create_message(payload.channel_id, "There are currently no more scheduled matches.")
       end
+      TournamentManager.save(tournament)
     end
 
     @[Discord::Handler(
