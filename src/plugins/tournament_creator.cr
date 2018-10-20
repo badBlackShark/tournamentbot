@@ -306,13 +306,13 @@ module TournamentBot::TournamentManager
     @[Discord::Handler(
       event: :message_create,
       middleware: {
-        Command.new("!remove"),
+        Command.new("!removeParticipant"),
         GuildChecker.new,
         TournamentChecker.new(TournamentManager.tournaments),
         PermissionChecker.new(TournamentManager.tournaments, Permission::Host)
       }
     )]
-    def remove(payload, ctx)
+    def remove_participant(payload, ctx)
       guild = ctx[GuildChecker::Result].id
       user = if payload.mentions.empty?
         begin
@@ -598,12 +598,19 @@ module TournamentBot::TournamentManager
       middleware: {
         Command.new("!updateDraftRole"),
         GuildChecker.new,
-        TournamentChecker.new(TournamentManager.tournaments)
+        TournamentChecker.new(TournamentManager.tournaments),
+        PermissionChecker.new(TournamentManager.tournaments, Permission::Host)
       }
     )]
     def update_draft_role(payload, ctx)
       guild = ctx[GuildChecker::Result].id
-      TournamentManager.tournaments[guild].validate_draft_role
+      tournament = TournamentManager.tournaments[guild]
+
+      tournament.validate_draft_role
+      staff = (tournament.hosts + tournament.volunteers).uniq
+      staff.each do |s|
+        TournamentBot.bot.client.add_guild_member_role(guild, s, tournament.draft_role)
+      end
 
       TournamentManager.save(TournamentManager.tournaments[guild])
       client.create_message(payload.channel_id, "The draft pick role has been validated and - if necessary - recreated.")
