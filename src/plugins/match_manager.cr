@@ -6,7 +6,7 @@ module TournamentBot::TournamentManager
     include Discord::Plugin
 
     def initialize
-      @parser = Time::Format.new("%d.%m.%y %I:%M %p", Time::Location.fixed("UTC", 0))
+      @parser = Time::Format.new("%d.%m.%y %R", Time::Location.fixed("UTC", 0))
     end
 
       @[Discord::Handler(
@@ -36,7 +36,7 @@ module TournamentBot::TournamentManager
       begin
         time = @parser.parse(time_raw)
       rescue e : Time::Format::Error
-        client.create_message(payload.channel_id, "Please provide the time in the required format (dd.MM.yy hh:mm am/pm).")
+        client.create_message(payload.channel_id, "Please provide the time in the required format (dd.MM.yy hh:mm).")
         return
       end
 
