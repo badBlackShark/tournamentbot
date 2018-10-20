@@ -29,7 +29,7 @@ module TournamentBot::TournamentManager
 
       if match = tournament.start_next
         @drafts[match.channel] = Draft.new(match, tournament.bans_per_player, tournament.picks_per_player)
-        client.create_message(payload.channel_id, "#{match.participants.map { |e| "<@#{e}>" }.join(", ")}, your match, which was scheduled for #{Utility.format_time(match.time)}, is starting now!")
+        client.create_message(payload.channel_id, "#{match.participants.map { |e| "<@#{e}>" }.join(", ")}, your match, which was scheduled for #{Utility.format_time(match.time)}, is starting now! Please immediately head over to <##{match.channel}>!")
       else
         client.create_message(payload.channel_id, "There are currently no more scheduled matches.")
       end
